@@ -7,19 +7,15 @@ function fibonacci($n) {
     }
 }
 
-$fibonacciSequence = [];
+$count = 0;
 
-for ($i = 0; count($fibonacciSequence) < 10; $i++) {
+for ($i = 0; $count < 10; $i++) {
     $fib = fibonacci($i);
     
     if ($fib > 100) {
-        break;
     }
 
-    $fibonacciSequence[] = $fib;
-}
-
-foreach ($fibonacciSequence as $fib) {
     echo $fib . " ";
+    $count++;
 }
 ?>

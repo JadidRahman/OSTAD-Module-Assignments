@@ -14,7 +14,5 @@ function generateFibonacci($n) {
 }
 
 $fibonacciNumbers = generateFibonacci(15);
-foreach ($fibonacciNumbers as $fib) {
-    echo $fib . " ";
-}
+echo implode(', ', $fibonacciNumbers);
 ?>
