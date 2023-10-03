@@ -11,15 +11,21 @@ class Product {
     }
 
     public function getFormattedPrice() {
+        // Format the price with two decimal places
         return '$' . number_format($this->price, 2);
     }
 
-    public function getId() {
-        return $this->id;
-    }
-
-    public function getName() {
-        return $this->name;
+    public function showDetails() {
+        // Print product details to the console
+        echo "Product Details:\n";
+        echo "- ID: {$this->id}\n";
+        echo "- Name: {$this->name}\n";
+        echo "- Price: {$this->getFormattedPrice()}\n";
     }
 }
 
+// Test the Product class
+$product = new Product(1, 'T-shirt', 19.99);
+$product->showDetails();
+
+?>
