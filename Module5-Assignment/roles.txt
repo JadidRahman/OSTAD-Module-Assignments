@@ -1,10 +1,6 @@
 Manager
 user
+
 hr
-exe
-exe
-exe
-exe
-exe
 exe
 exe

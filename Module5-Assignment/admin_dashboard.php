@@ -1,13 +1,6 @@
 <?php
 session_start();
 
-// Redirect non-admin users to the home page
-if ($_SESSION['role'] !== 'Admin') {
-    header('Location: home.php');
-    exit;
-}
-
-// Read users and roles from the files
 $usersFile = 'users.txt';
 $rolesFile = 'roles.txt';
 $users = file_exists($usersFile) ? file($usersFile) : [];
@@ -17,7 +10,6 @@ $roles = file_exists($rolesFile) ? file($rolesFile) : [];
 if (isset($_GET['delete'])) {
     $emailToDelete = filter_input(INPUT_GET, 'delete', FILTER_SANITIZE_EMAIL);
 
-    // Additional validation can be done here
     if (!empty($emailToDelete)) {
         // Filter out the user to delete
         $users = array_filter($users, function ($user) use ($emailToDelete) {
@@ -25,10 +17,8 @@ if (isset($_GET['delete'])) {
             return trim($email) !== $emailToDelete;
         });
 
-        // Save the updated list back to the file
         file_put_contents($usersFile, implode("", $users));
-        
-        // Set a success message
+
         $_SESSION['success_message'] = "User deleted successfully.";
 
         // Refresh the page to update the user list
@@ -40,6 +30,19 @@ if (isset($_GET['delete'])) {
     }
 }
 
+$successMessage = '';
+$errorMessage = '';
+
+if (isset($_SESSION['success_message'])) {
+    $successMessage = $_SESSION['success_message'];
+    unset($_SESSION['success_message']); 
+}
+
+if (isset($_SESSION['error_message'])) {
+    $errorMessage = $_SESSION['error_message'];
+    unset($_SESSION['error_message']); 
+}
+
 // Adding a new role
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['new_role'])) {
     $newRole = trim($_POST['new_role']);
@@ -49,10 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['new_role'])) {
     }
 }
 
-// CSS and HTML below
+// Logout handling
+if (isset($_POST['logout'])) {
+    // Destroy the session and redirect to home.php
+    session_destroy();
+    header('Location: home.php');
+    exit;
+}
+
 ?>
 
-<!DOCTYPE html>
+
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -102,12 +113,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['new_role'])) {
     <h2 style="text-align: center;">Admin Dashboard</h2>
     <!-- Form for adding new roles -->
     <div style="text-align: center; margin-bottom: 20px;">
-        <form method="post" action="admin_dashboard.php">
-            <input type="text" name="new_role" placeholder="New Role" required>
-            <button type="submit">Add Role</button>
-        </form>
-    </div>
 
+        <?php if (!empty($successMessage)): ?>
+        <div style="color: green;">
+            <?= htmlspecialchars($successMessage) ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Display Error Message -->
+    <?php if (!empty($errorMessage)): ?>
+        <div style="color: red;">
+            <?= htmlspecialchars($errorMessage) ?>
+        </div>
+    <?php endif; ?>
+         <form method="post" action="admin_dashboard.php">
+        <input type="text" name="new_role" placeholder="New Role" required>
+        <button type="submit">Add Role</button>
+    </form>
+</div>
 
     <table class="table-users">
         <thead>
@@ -120,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['new_role'])) {
         </thead>
         <tbody>
             <?php foreach ($users as $user): ?>
-                <?php list($email, $passwordHash, $role, $fullname) = explode(',', trim($user)); ?>
+                <!-- <?php list($email, $passwordHash, $role, $fullname) = explode(',', trim($user)); ?> -->
                 <tr>
                     <td><?= htmlspecialchars($email) ?></td>
                     <td><?= htmlspecialchars($role) ?></td>
@@ -146,8 +169,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['new_role'])) {
 
             <?php endforeach; ?>
         </tbody>
-    </table>
-    
+    </table>        
+    <div style="text-align: center; margin-top: 20px;">
+    <form action="admin_dashboard.php" method="post">
+        <input type="submit" name="logout" value="Logout" class="action-button">
+    </form>
+</div>
+
+
 
 </body>
 </html>

@@ -1,43 +1,76 @@
 <?php
 session_start();
 
-// Determine which form to show
-$showAdminLogin = isset($_GET['login']) && $_GET['login'] === 'admin';
-$showUserLogin = isset($_GET['login']) && $_GET['login'] === 'user';
-
-// User/Admin login logic
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if ($showAdminLogin) {
-        // Add your admin login logic here
+// Redirect if already logged in
+if (isset($_SESSION['is_logged_in'])) {
+    $dashboard = ($_SESSION['role'] === 'Admin') ? 'admin_dashboard.php' : 'user_dashboard.php';
+    header('Location: ' . $dashboard);
+    exit;
+}
 
 // Define admin credentials
 define('ADMIN_EMAIL', 'admin@admin.com');
-define('ADMIN_PASSWORD', 'admin123');
+define('ADMIN_PASSWORD', password_hash('admin123', PASSWORD_DEFAULT)); // Store hashed password
 
 // Determine which form to show
 $showAdminLogin = isset($_GET['login']) && $_GET['login'] === 'admin';
-$showUserLogin = isset($_GET['login']) && $_GET['login'] === 'user';
+$showUserLogin = !$showAdminLogin;
 
-// Check if the form has been submitted
+$loginError = '';
+
+// User/Admin login logic
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Read users from the file
+    $usersFile = 'users.txt';
+    $users = file_exists($usersFile) ? file($usersFile) : [];
+
     if ($showAdminLogin) {
-        // The admin credentials are fixed, so we just start the session
-        $_SESSION['email'] = ADMIN_EMAIL;
-        $_SESSION['role'] = 'Admin';
-        header('Location: admin_dashboard.php'); // Redirect to the admin dashboard
+        // Admin login logic
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        if ($email === ADMIN_EMAIL && password_verify($password, ADMIN_PASSWORD)) {
+            // Admin credentials are correct
+            $_SESSION['is_logged_in'] = true;
+            $_SESSION['role'] = 'Admin';
+            $_SESSION['email'] = $email;
+            header('Location: admin_dashboard.php');
+            exit;
+        } else {
+            $loginError = 'Invalid admin credentials.';
+        }
+    } else {
+        // User login logic
+        if ($showUserLogin) {
+    // User login logic
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+    $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
+
+    // Check if user exists and password is correct
+    $userFound = false;
+    foreach ($users as $user) {
+        list($storedEmail, $storedPasswordHash, $role, $fullname) = explode(',', trim($user));
+        if ($email === $storedEmail && password_verify($password, $storedPasswordHash)) {
+            // User credentials are correct
+            $_SESSION['is_logged_in'] = true;
+            $_SESSION['role'] = trim($role); // Trim role to remove possible newline characters
+            $_SESSION['email'] = $email;
+            $_SESSION['fullname'] = trim($fullname); // Trim fullname to remove possible newline characters
+            $userFound = true;
+            break;
+        }
+    }
+    
+    if ($userFound) {
+        header('Location: user_dashboard.php');
         exit;
-    } elseif ($showUserLogin) {
-        // Handle user login logic here
+    } else {
+        $loginError = 'Invalid email or password.';
     }
 }
-
-
-    } elseif ($showUserLogin) {
-        // Add your user login logic here
-    }
 }
+}?>
 
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,17 +163,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container">
         <!-- User Login Form -->
         <div class="login-form">
-            <h2>User Login</h2>
-            <form method="post" action="user_dashboard.php">
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Login</button>
-            </form>
-            <?php if (isset($loginError)): ?>
-                <p style="color: red;"><?php echo $loginError; ?></p>
-            <?php endif; ?>
-            <p>Don't Have An Account Yet? <a href="signup.php">Sign Up</a></p>
-        </div>
+    <h2>User Login</h2>
+    <form method="post" action="home.php"> <!-- Update this line -->
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+    <?php if (isset($loginError)): ?>
+        <p style="color: red;"><?php echo $loginError; ?></p>
+    <?php endif; ?>
+    <p>Don't Have An Account Yet? <a href="signup.php">Sign Up</a></p>
+</div>
     </div>
     <?php endif; ?>
 

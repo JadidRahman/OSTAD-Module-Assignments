@@ -1,11 +1,8 @@
 <?php
-// Start the session
-session_start();
 
-// Define a default role for new registrations if not specified
+session_start();
 $defaultRole = 'User';
 
-// Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $fullname = filter_input(INPUT_POST, 'fullname', FILTER_SANITIZE_STRING);
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
@@ -35,14 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($userExists) {
             $error_message = 'An account with this email already exists.';
         } else {
-            // Hash the password
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-            // Save the new user
             $userRecord = "$email,$hashedPassword,$role,$fullname\n";
             file_put_contents($usersFile, $userRecord, FILE_APPEND);
 
-            // Set a success message or redirect to a login page
             $_SESSION['success_message'] = 'Registration successful. Please log in.';
             header('Location: home.php');
             exit;
@@ -50,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// If there's an error, display it above the signup form
 if (!empty($error_message)) {
     echo "<p>Error: $error_message</p>";
 }
